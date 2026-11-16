@@ -137,4 +137,52 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installProm
 $('install').onclick=async()=>{if(installPrompt){installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('install').hidden=true}else alert('请在 Chrome 菜单中选择“添加到主屏幕”或“安装应用”。')};
 load();render();if('serviceWorker'in navigator)window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 if(draws.length)refresh();
-</script></body></html>
+</script></body>
+<script>
+(function(){
+  const actions=document.querySelector('.hero .actions');
+  if(actions){
+    actions.insertAdjacentHTML('beforeend',
+      '<button class="secondary" id="viewFullDraws">查看完整开奖结果</button>');
+  }
+
+  const panel=document.createElement('section');
+  panel.className='panel';
+  panel.id='fullDrawPanel';
+  panel.innerHTML='<h2>完整开奖结果（第一名至第十名）</h2><div id="fullLatest">等待开奖数据…</div><details style="margin-top:16px"><summary>查看历史完整开奖记录</summary><div id="fullHistory" style="overflow:auto;margin-top:12px"></div></details>';
+
+  const anchor=document.getElementById('results').closest('.panel');
+  anchor.parentNode.insertBefore(panel,anchor);
+
+  function showFullDraws(){
+    if(!draws.length)return;
+    const latest=draws[0];
+    document.getElementById('fullLatest').innerHTML=
+      '<p class="small">最新期号：'+latest.issue+'</p>'+
+      '<div class="grid">'+latest.numbers.map((n,i)=>
+        '<div class="stat" style="'+(i===0?'border:2px solid var(--gold);color:var(--gold)':'')+'">'+
+        '<span>'+(i===0?'第一名 ★':'第'+(i+1)+'名')+'</span><b>'+n+'</b></div>'
+      ).join('')+'</div>';
+
+    document.getElementById('fullHistory').innerHTML=
+      '<table><thead><tr><th>期号</th>'+
+      Array.from({length:10},(_,i)=>'<th>'+(i+1)+'</th>').join('')+
+      '</tr></thead><tbody>'+
+      draws.map(d=>'<tr><td>'+d.issue+'</td>'+
+        d.numbers.map(n=>'<td>'+n+'</td>').join('')+
+        '</tr>').join('')+
+      '</tbody></table>';
+  }
+
+  const oldRender=render;
+  render=function(){
+    oldRender();
+    showFullDraws();
+  };
+
+  showFullDraws();
+
+  const btn=document.getElementById('viewFullDraws');
+  if(btn)btn.onclick=()=>panel.scrollIntoView({behavior:'smooth'});
+})();
+</script></html>
